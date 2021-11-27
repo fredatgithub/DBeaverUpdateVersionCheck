@@ -12,7 +12,7 @@ namespace DBeaverUpdateVersionCheck
     static void Main()
     {
       Action<string> Display = Console.WriteLine;
-      Display("Checking if there is a newer version of DBeaver");
+      Display("Checking if there is a newer version of DBeaver:");
       Display(string.Empty);
       // checking if DBeaver is installed in C:\Users\userName\AppData\Local\DBeaver
       string userName = Environment.UserName;
@@ -63,7 +63,7 @@ namespace DBeaverUpdateVersionCheck
       // processing the readme file
       string dbeaverVersionInstalled = readMeFileContent[2];
       Display($"I have found DBeaver version {dbeaverVersionInstalled} installed on your computer");
-
+      Display(string.Empty);
       // checking latest version on https://dbeaver.io/files/ea/
       string dbeaverInternetAddress = "https://dbeaver.io/files/ea/";
       string dbeaverWebSiteContent = GetWebPageContent(dbeaverInternetAddress);
@@ -100,16 +100,21 @@ namespace DBeaverUpdateVersionCheck
       var lineSplitted = firstVersionInstance.Split('-');
       string webSiteLatestVersion = lineSplitted[2];
       Display($"The latest version found in the web site is {webSiteLatestVersion}");
+      Display(string.Empty);
       if (webSiteLatestVersion == dbeaverVersionInstalled)
       {
+        Console.ForegroundColor = ConsoleColor.Red;
         Display($"There is no newer version of DBeaver available.");
       }
       else
       {
+        Console.ForegroundColor = ConsoleColor.Green;
         Display($"You have DBeaver version {dbeaverVersionInstalled}");
         Display($"There is a newer version of DBeaver available which is {webSiteLatestVersion}");
       }
 
+      Console.ForegroundColor = ConsoleColor.White;
+      Display(string.Empty);
       Display("Press any key to exit:");
       Console.ReadKey();
     }
