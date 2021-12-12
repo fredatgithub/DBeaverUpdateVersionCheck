@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using HtmlAgilityPack;
 
 namespace DBeaverUpdateVersionCheck
@@ -12,11 +14,12 @@ namespace DBeaverUpdateVersionCheck
     static void Main()
     {
       Action<string> Display = Console.WriteLine;
+      Display($"DBeaver update version checker: {GetVersion()}");
       Display("Checking if there is a newer version of DBeaver:");
       Display(string.Empty);
       // checking if DBeaver is installed in C:\Users\userName\AppData\Local\DBeaver
       string userName = Environment.UserName;
-      string userNameProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+      // string userNameProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
       string appDatafolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
       // remove domain if any
       if (userName.Contains("\\"))
@@ -67,12 +70,8 @@ namespace DBeaverUpdateVersionCheck
       // checking latest version on https://dbeaver.io/files/ea/
       string dbeaverInternetAddress = "https://dbeaver.io/files/ea/";
       string dbeaverWebSiteContent = GetWebPageContent(dbeaverInternetAddress);
-      // Display($"{dbeaverWebSiteContent}");
-      List<string> webSiteStartsWithDBeaver = new List<string>();
-      //string htmlFileName = "file1.html";
-      //SaveWebPageToFile(htmlFileName, dbeaverWebSiteContent);
-      //var tmp = ParseHtml(htmlFileName);
-      // string updateWebLine = "dbeaver-ce-21.3.0-linux.gtk.aarch64-nojdk.tar.gz";
+      
+      // "dbeaver-ce-21.3.0-linux.gtk.aarch64-nojdk.tar.gz";
       string searchedPattern = "dbeaver-ce-";
       if (dbeaverWebSiteContent.Contains(searchedPattern))
       {
@@ -83,22 +82,25 @@ namespace DBeaverUpdateVersionCheck
         //Display($"The pattern {searchedPattern} has not been found");
       }
 
-      var webSiteContentSplitted = dbeaverWebSiteContent.Split(new[] { '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-      foreach (string line in webSiteContentSplitted)
+      var webSiteContentSplittedByInferiorSign = dbeaverWebSiteContent.Split('<');
+      List<string> webSiteContentWithPattern = new List<string>();
+      string win32Version = string.Empty;
+      foreach (string line in webSiteContentSplittedByInferiorSign)
       {
-        if(line.Contains(searchedPattern))
+        if (line.Contains(searchedPattern))
         {
           // dbeaver-ce-21.3.0-macosx.cocoa.aarch64.tar.gz
-          webSiteStartsWithDBeaver.Add(line);
-          //Display(line);
+          webSiteContentWithPattern.Add(line);
+          if (line.Contains("win32"))
+          {
+            win32Version = line;
+          }
         }
       }
 
-      string firstLine = webSiteStartsWithDBeaver[0];
-      var hrefStrings = firstLine.Split('>');
-      string firstVersionInstance = hrefStrings[16];
-      var lineSplitted = firstVersionInstance.Split('-');
-      string webSiteLatestVersion = lineSplitted[2];
+      var versionLineSplitted = win32Version.Split('>');
+      string firstLine = versionLineSplitted[1];
+      var webSiteLatestVersion = firstLine.Substring(11,6);
       Display($"The latest version found in the web site is {webSiteLatestVersion}");
       Display(string.Empty);
       Version webSiteVersion = new Version($"{webSiteLatestVersion}.0");
@@ -119,6 +121,13 @@ namespace DBeaverUpdateVersionCheck
       Display(string.Empty);
       Display("Press any key to exit:");
       Console.ReadKey();
+    }
+
+    private static string GetVersion()
+    {
+      Assembly assembly = Assembly.GetExecutingAssembly();
+      FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
+      return $"V{fvi.FileMajorPart}.{fvi.FileMinorPart}.{fvi.FileBuildPart}.{fvi.FilePrivatePart}";
     }
 
     private static bool SaveWebPageToFile(string fileName, string content)
