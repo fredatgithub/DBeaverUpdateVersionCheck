@@ -72,7 +72,7 @@ namespace DBeaverUpdateVersionCheck
       //string htmlFileName = "file1.html";
       //SaveWebPageToFile(htmlFileName, dbeaverWebSiteContent);
       //var tmp = ParseHtml(htmlFileName);
-      string updateWebLine = "dbeaver-ce-21.3.0-linux.gtk.aarch64-nojdk.tar.gz";
+      // string updateWebLine = "dbeaver-ce-21.3.0-linux.gtk.aarch64-nojdk.tar.gz";
       string searchedPattern = "dbeaver-ce-";
       if (dbeaverWebSiteContent.Contains(searchedPattern))
       {
@@ -101,18 +101,20 @@ namespace DBeaverUpdateVersionCheck
       string webSiteLatestVersion = lineSplitted[2];
       Display($"The latest version found in the web site is {webSiteLatestVersion}");
       Display(string.Empty);
-      if (webSiteLatestVersion == dbeaverVersionInstalled)
-      {
-        Console.ForegroundColor = ConsoleColor.Red;
-        Display($"There is no newer version of DBeaver available.");
-      }
-      else
+      Version webSiteVersion = new Version($"{webSiteLatestVersion}.0");
+      Version installedVersion = new Version($"{dbeaverVersionInstalled}.0");
+      if (webSiteVersion > installedVersion)
       {
         Console.ForegroundColor = ConsoleColor.Green;
         Display($"You have DBeaver version {dbeaverVersionInstalled}");
         Display($"There is a newer version of DBeaver available which is {webSiteLatestVersion}");
       }
-
+      else
+      {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Display($"There is no newer version of DBeaver available.");
+      }
+      
       Console.ForegroundColor = ConsoleColor.White;
       Display(string.Empty);
       Display("Press any key to exit:");
