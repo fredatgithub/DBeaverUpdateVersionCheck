@@ -110,6 +110,7 @@ namespace DBeaverUpdateVersionCheck
         Console.ForegroundColor = ConsoleColor.Green;
         Display($"You have DBeaver version {dbeaverVersionInstalled}");
         Display($"There is a newer version of DBeaver available which is {webSiteLatestVersion}");
+        Display($"The link for the newer version of DBeaver is available at: {dbeaverInternetAddress}");
       }
       else
       {
