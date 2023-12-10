@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using HtmlAgilityPack;
+using Microsoft.Win32;
 
 namespace DBeaverUpdateVersionCheck
 {
@@ -18,9 +19,14 @@ namespace DBeaverUpdateVersionCheck
       Display("Checking if there is a newer version of DBeaver:");
       Display(string.Empty);
       // checking if DBeaver is installed in C:\Users\userName\AppData\Local\DBeaver
+      // now in F:\Users\user1\AppData\Local\DBeaver
       string userName = Environment.UserName;
       // string userNameProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
       string appDatafolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+      appDatafolder = @"F:\Users\user1\AppData\Local\";
+      string execPath = Assembly.GetEntryAssembly().Location;
+      var dbeaverInstallation = GetInstallationPath("Dbeaver.exe");
+
       // remove domain if any
       if (userName.Contains("\\"))
       {
@@ -43,7 +49,9 @@ namespace DBeaverUpdateVersionCheck
       if (!dbeaverIsInstalled)
       {
         Display($"DBeaver has not been found in {dbeaverReadMeFilePath}");
-        return;
+        Display(string.Empty);
+        Display("Press any key to exit:");
+        Console.ReadKey();
       }
 
       List<string> readMeFileContent = new List<string>();
@@ -70,7 +78,7 @@ namespace DBeaverUpdateVersionCheck
       // checking latest version on https://dbeaver.io/files/ea/
       string dbeaverInternetAddress = "https://dbeaver.io/files/ea/";
       string dbeaverWebSiteContent = GetWebPageContent(dbeaverInternetAddress);
-      
+
       // "dbeaver-ce-21.3.0-linux.gtk.aarch64-nojdk.tar.gz";
       string searchedPattern = "dbeaver-ce-";
       if (dbeaverWebSiteContent.Contains(searchedPattern))
@@ -100,7 +108,7 @@ namespace DBeaverUpdateVersionCheck
 
       var versionLineSplitted = win32Version.Split('>');
       string firstLine = versionLineSplitted[1];
-      var webSiteLatestVersion = firstLine.Substring(11,6);
+      var webSiteLatestVersion = firstLine.Substring(11, 6);
       Display($"The latest version found in the web site is {webSiteLatestVersion}");
       Display(string.Empty);
       Version webSiteVersion = new Version($"{webSiteLatestVersion}.0");
@@ -117,11 +125,40 @@ namespace DBeaverUpdateVersionCheck
         Console.ForegroundColor = ConsoleColor.Red;
         Display($"There is no newer version of DBeaver available.");
       }
-      
+
       Console.ForegroundColor = ConsoleColor.White;
       Display(string.Empty);
       Display("Press any key to exit:");
       Console.ReadKey();
+    }
+
+    public static string GetInstallationPath(string applicationName)
+    {
+      //Ordinateur\HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Uninstall\DBeaver (current user)
+      // DisplayVersion = 23.3.0
+      string uninstallKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
+
+      using (RegistryKey key = Registry.LocalMachine.OpenSubKey(uninstallKey))
+      {
+        if (key != null)
+        {
+          foreach (string subKeyName in key.GetSubKeyNames())
+          {
+            using (RegistryKey subKey = key.OpenSubKey(subKeyName))
+            {
+              object displayName = subKey.GetValue("DisplayName");
+              object installLocation = subKey.GetValue("InstallLocation");
+
+              if (displayName != null && installLocation != null && displayName.ToString().Contains(applicationName))
+              {
+                return installLocation.ToString();
+              }
+            }
+          }
+        }
+      }
+
+      return null;
     }
 
     private static string GetVersion()
